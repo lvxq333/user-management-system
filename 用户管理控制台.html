@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户管理 | 广域立体风险感知平台</title>
+    <!-- FIX: 添加 Favicon 链接以消除 404 错误 -->
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* 深色主题配置，与PPT风格一致 */
+        :root {
+            --color-primary: #4f46e5;
+            /* Indigo-600 */
+            --color-background: #0f172a;
+            /* Slate-900 */
+            --color-card: #1e293b;
+            /* Slate-800 */
+            --color-text-light: #f1f5f9;
+            /* Slate-100 */
+            --color-text-muted: #94a3b8;
+            /* Slate-400 */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--color-background);
+            color: var(--color-text-light);
+            min-height: 100vh;
+        }
+
+        /* 滚动条美化 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+
+        /* 标签页激活样式 */
+        .tab-btn {
+            padding: 0.75rem 1rem;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--color-text-muted);
+        }
+
+        .tab-btn:hover {
+            color: var(--color-text-light);
+        }
+
+        .tab-btn.active {
+            color: var(--color-primary);
+            border-bottom: 3px solid var(--color-primary);
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="app" class="p-4 md:p-8">
+
+        <!-- 标题区 -->
+        <header class="mb-6 pb-4 border-b border-slate-700 flex justify-between items-center">
+            <h1 class="text-3xl font-bold text-slate-50 flex items-center">
+                <i data-lucide="users" class="w-7 h-7 mr-3 text-indigo-400"></i>
+                用户权限管理中心
+            </h1>
+            <div class="flex items-center gap-4">
+                <div class="text-sm text-slate-400 hidden md:block">
+                    平台等级权限配置 (API/菜单级)
+                </div>
+                <!-- 返回主页按钮 -->
+                <button onclick="window.location.href='home.html'"
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200 shadow-md flex items-center whitespace-nowrap">
+                    <i data-lucide="home" class="w-4 h-4 mr-1"></i>
+                    返回主页
+                </button>
+            </div>
+        </header>
+
+        <!-- 标签页导航 -->
+        <nav class="flex space-x-6 border-b border-slate-700 mb-6">
+            <button id="tab-users" class="tab-btn active" data-tab="users">用户列表</button>
+            <button id="tab-roles" class="tab-btn" data-tab="roles">角色与权限</button>
+        </nav>
+
+        <!-- 内容区域 -->
+        <div id="content">
+
+            <!-- 1. 用户列表 Tab -->
+            <div id="tab-content-users" class="tab-content">
+                <div class="bg-card p-6 rounded-xl shadow-lg border border-slate-700">
+
+                    <!-- 用户管理控制台.html 修改部分 1：添加搜索框结构 -->
+                    <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                        <h2 class="text-xl font-semibold text-indigo-300">系统用户列表</h2>
+
+                        <div class="flex gap-3 w-full md:w-auto">
+                            <!-- 新增：搜索框 -->
+                            <div class="relative flex-grow md:flex-grow-0">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+                                </div>
+                                <input type="text" id="user-search-input"
+                                    class="bg-slate-700 border border-slate-600 text-slate-100 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 p-2.5 placeholder-slate-400"
+                                    placeholder="搜索用户名或姓名...">
+                            </div>
+
+                            <!-- 原有的新增按钮 -->
+                            <button onclick="openUserModal('add')"
+                                class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200 shadow-md flex items-center whitespace-nowrap">
+                                <i data-lucide="plus" class="w-4 h-4 mr-1"></i>
+                                新增用户
+                            </button>
+                        </div>
+                    </div>
+
+
+                    <!-- 用户数据表格 -->
+                    <div class="overflow-x-auto rounded-lg border border-slate-700">
+                        <table class="min-w-full divide-y divide-slate-700">
+                            <thead class="bg-slate-700">
+                                <tr>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                                        用户ID</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                                        用户名</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                                        真实姓名</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                                        角色</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                                        状态</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                                        操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="user-table-body" class="divide-y divide-slate-800">
+                                <!-- 数据将由JS填充 -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <p id="user-loading-message" class="text-center p-6 text-slate-400">加载中...</p>
+                </div>
+            </div>
+
+            <!-- 2. 角色与权限 Tab -->
+            <div id="tab-content-roles" class="tab-content hidden">
+                <div class="bg-card p-6 rounded-xl shadow-lg border border-slate-700">
+                    <div class="flex justify-between items-center mb-4 flex-wrap gap-3">
+                        <h2 class="text-xl font-semibold text-indigo-300">角色模板配置</h2>
+                        <button onclick="openRoleModal('add')"
+                            class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200 shadow-md flex items-center">
+                            <i data-lucide="shield-plus" class="w-4 h-4 mr-1"></i>
+                            新增角色
+                        </button>
+                    </div>
+
+                    <!-- 角色列表 -->
+                    <div id="role-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- 角色卡片将由JS填充 -->
+                    </div>
+                    <p id="role-loading-message" class="text-center p-6 text-slate-400">加载中...</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 弹窗：用户添加/编辑 Modal -->
+    <div id="user-modal" class="fixed inset-0 bg-black bg-opacity-75 hidden z-50 overflow-y-auto"
+        onclick="closeModal(event, 'user-modal')">
+        <div class="min-h-screen flex items-center justify-center p-4">
+            <div class="bg-slate-800 w-full max-w-lg p-6 rounded-xl shadow-2xl border border-slate-700"
+                onclick="event.stopPropagation()">
+                <h3 id="user-modal-title" class="text-2xl font-bold mb-6 text-indigo-300">新增用户</h3>
+                <form id="user-form">
+                    <input type="hidden" id="user-id">
+
+                    <div class="mb-4">
+                        <label for="username" class="block text-sm font-medium mb-1 text-slate-300">用户名</label>
+                        <input type="text" id="username" required
+                            class="w-full p-2.5 bg-slate-700 border border-slate-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-slate-50">
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="password" class="block text-sm font-medium mb-1 text-slate-300">密码
+                            (新增/修改时填写)</label>
+                        <input type="password" id="password"
+                            class="w-full p-2.5 bg-slate-700 border border-slate-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-slate-50">
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="real-name" class="block text-sm font-medium mb-1 text-slate-300">真实姓名</label>
+                        <input type="text" id="real-name"
+                            class="w-full p-2.5 bg-slate-700 border border-slate-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-slate-50">
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="user-role-select" class="block text-sm font-medium mb-1 text-slate-300">分配角色</label>
+                        <select id="user-role-select" multiple
+                            class="w-full p-2.5 bg-slate-700 border border-slate-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-slate-50 h-32">
+                            <!-- 角色选项将由JS填充 -->
+                        </select>
+                        <p class="text-xs text-slate-400 mt-1">按住Ctrl/Cmd可多选</p>
+                    </div>
+
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button type="button" onclick="document.getElementById('user-modal').classList.add('hidden')"
+                            class="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition duration-200">取消</button>
+                        <button type="submit"
+                            class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition duration-200">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- 弹窗：角色添加/编辑 Modal -->
+    <div id="role-modal" class="fixed inset-0 bg-black bg-opacity-75 hidden z-50 overflow-y-auto"
+        onclick="closeModal(event, 'role-modal')">
+        <div class="min-h-screen flex items-center justify-center p-4">
+            <div class="bg-slate-800 w-full max-w-2xl p-6 rounded-xl shadow-2xl border border-slate-700"
+                onclick="event.stopPropagation()">
+                <h3 id="role-modal-title" class="text-2xl font-bold mb-6 text-indigo-300">新增角色</h3>
+                <form id="role-form">
+                    <input type="hidden" id="role-id">
+
+                    <div class="mb-4">
+                        <label for="role-name" class="block text-sm font-medium mb-1 text-slate-300">角色名称</label>
+                        <input type="text" id="role-name" required
+                            class="w-full p-2.5 bg-slate-700 border border-slate-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-slate-50">
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="role-desc" class="block text-sm font-medium mb-1 text-slate-300">描述</label>
+                        <textarea id="role-desc"
+                            class="w-full p-2.5 bg-slate-700 border border-slate-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-slate-50"></textarea>
+                    </div>
+
+                    <h4 class="text-lg font-medium mt-6 mb-3 text-slate-300">权限配置 (API/菜单级)</h4>
+                    <div id="permission-checkboxes"
+                        class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-700 p-4 rounded-lg max-h-80 overflow-y-auto">
+                        <!-- 权限复选框将由JS填充 -->
+                    </div>
+
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button type="button" onclick="document.getElementById('role-modal').classList.add('hidden')"
+                            class="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition duration-200">取消</button>
+                        <button type="submit"
+                            class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition duration-200">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Lucide Icons 渲染
+        lucide.createIcons();
+
+        // ---------------------------------------------
+        // API 配置
+        // ---------------------------------------------
+        const API_BASE_URL = 'http://localhost:3000/api';
+
+        // 全局数据缓存，用于前端映射 (例如：角色ID到角色名称)
+        let globalRoles = [];
+        let globalPermissions = [];
+
+        // --- 辅助函数 ---
+
+        /**
+         * 通用API请求函数，处理JSON和错误
+         * @param {string} endpoint - API 路径
+         * @param {object} options - fetch 选项
+         * @returns {Promise<object>} - API 响应数据
+         */
+        async function apiFetch(endpoint, options = {}) {
+            const url = `${API_BASE_URL}${endpoint}`;
+            try {
+                const response = await fetch(url, {
+                    headers: { 'Content-Type': 'application/json' },
+                    ...options,
+                });
+                const data = await response.json();
+
+                if (!response.ok) {
+                    // 如果HTTP状态码不是2xx，抛出错误信息
+                    throw new Error(data.message || `API Error: ${response.status}`);
+                }
+                return data;
+            } catch (error) {
+                console.error('API Error:', error);
+                // 使用自定义弹窗替代 alert()
+                showToast(`操作失败: ${error.message || '网络连接或服务器错误'}`, 'error');
+                throw error; // 重新抛出错误以便调用方捕获
+            }
+        }
+
+        function handleLogout() {
+            if (confirm('确定要退出管理系统吗？')) {
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('current_user');
+                window.location.href = 'login.html';
+            }
+        }
+
+        /**
+         * 自定义 Toast 通知（替代 alert/confirm）
+         */
+        function showToast(message, type = 'info') {
+            // 实际项目中应实现一个漂亮的Toast组件
+            console.log(`[${type.toUpperCase()}] ${message}`);
+            // 简单实现：使用一个临时的div显示消息
+            let toast = document.getElementById('api-toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'api-toast';
+                toast.style.cssText = 'position:fixed; top:20px; right:20px; padding:15px; border-radius:8px; color:white; font-weight:bold; z-index:1000; transition:opacity 0.5s; opacity:0;';
+                document.body.appendChild(toast);
+            }
+
+            const colors = {
+                info: 'bg-indigo-600',
+                success: 'bg-green-600',
+                error: 'bg-red-600'
+            };
+
+            toast.className = colors[type] || colors.info;
+            toast.textContent = message;
+            toast.style.opacity = 1;
+
+            setTimeout(() => {
+                toast.style.opacity = 0;
+            }, 3000);
+        }
+
+        /**
+         * 加载所有全局数据（角色和权限），确保数据映射可用
+         */
+        async function loadGlobalData() {
+            try {
+                // 注意：roles API 路由已经包含了 permissionIds
+                globalRoles = await apiFetch('/roles');
+                globalPermissions = await apiFetch('/permissions');
+            } catch (e) {
+                console.error('Failed to load global data for roles/permissions:', e);
+            }
+        }
+
+        // --- 渲染逻辑 ---
+
+        /**
+         * 切换标签页内容
+         * @param {string} tabName - users 或 roles
+         */
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.getAttribute('data-tab') === tabName) {
+                    btn.classList.add('active');
+                }
+            });
+
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+
+            document.getElementById(`tab-content-${tabName}`).classList.remove('hidden');
+
+            // 重新加载数据
+            if (tabName === 'users') {
+                renderUserTable();
+            } else if (tabName === 'roles') {
+                renderRoleList();
+            }
+        }
+
+        /**
+         * 渲染用户列表表格 (修改版：支持搜索)
+         * @param {string} searchTerm - 搜索关键词，默认为空
+         */
+        async function renderUserTable(searchTerm = '') {
+            const tableBody = document.getElementById('user-table-body');
+            const loadingMessage = document.getElementById('user-loading-message');
+
+            tableBody.innerHTML = '';
+            loadingMessage.classList.remove('hidden');
+            loadingMessage.textContent = '加载中...';
+
+            try {
+                await loadGlobalData();
+
+                // --- 核心修改点 ---
+                // 构建 API URL，如果有搜索词则带上参数
+                let url = '/users';
+                if (searchTerm) {
+                    // encodeURIComponent 用于处理特殊字符 (如空格、中文)
+                    url += `?search=${encodeURIComponent(searchTerm)}`;
+                }
+
+                const users = await apiFetch(url);
+                // ------------------
+
+                loadingMessage.classList.add('hidden');
+
+                if (users.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-400">
+                    <div class="flex flex-col items-center">
+                        <i data-lucide="search-x" class="w-8 h-8 mb-2 opacity-50"></i>
+                        没有找到匹配的用户
+                    </div>
+                 </td></tr>`;
+                    lucide.createIcons(); // 刷新图标
+                    return;
+                }
+
+                users.forEach(user => {
+                    // ... 这里的代码保持不变，负责渲染每一行 ...
+                    // 为了节省篇幅，这里省略重复的渲染代码
+                    // 请保留您原有的 users.forEach 内部逻辑
+                    const userRoles = user.roleIds.map(id => globalRoles.find(r => r.id === id)?.role_name || '未知').join(', ');
+                    const status = user.status;
+                    const statusClass = status === 'active' ? 'text-green-400 bg-green-900' : 'text-red-400 bg-red-900';
+
+                    const row = `
+                    <tr class="hover:bg-slate-800 transition duration-150">
+                        <td class="px-4 py-3 text-sm font-medium text-slate-300">${user.id}</td>
+                        <td class="px-4 py-3 text-sm">${user.username}</td>
+                        <td class="px-4 py-3 text-sm">${user.realName || '-'}</td>
+                        <td class="px-4 py-3 text-sm text-indigo-400">${userRoles}</td>
+                        <td class="px-4 py-3">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${statusClass} bg-opacity-50">
+                                ${status === 'active' ? '激活' : '禁用'}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-sm whitespace-nowrap">
+                            <button onclick="openUserModal('edit', ${user.id})" class="text-indigo-400 hover:text-indigo-300 mr-3">编辑</button>
+                            <button onclick="confirmToggleUserStatus(${user.id}, '${status}')" class="text-yellow-400 hover:text-yellow-300 mr-3">${status === 'active' ? '禁用' : '激活'}</button>
+                            <button onclick="confirmDeleteUser(${user.id})" class="text-red-400 hover:text-red-300">删除</button>
+                        </td>
+                    </tr>
+                `;
+                    tableBody.insertAdjacentHTML('beforeend', row);
+                });
+                lucide.createIcons();
+
+            } catch (error) {
+                loadingMessage.textContent = '加载失败';
+            }
+        }
+
+        // --- 新增：绑定搜索事件 ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            // ... 原有的代码 ...
+
+            const searchInput = document.getElementById('user-search-input');
+
+            // 1. 监听回车键 (按下回车立即搜索)
+            searchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    renderUserTable(searchInput.value.trim());
+                }
+            });
+
+            // 2. (可选) 监听输入变化 (实现实时搜索，为了性能建议加延迟，或者只用上面的回车搜索)
+            // 这里演示简单的防抖逻辑：用户停止输入 500ms 后自动搜索
+            let timeout = null;
+            searchInput.addEventListener('input', (e) => {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                    renderUserTable(searchInput.value.trim());
+                }, 500);
+            });
+        });
+
+        /**
+         * 渲染角色列表卡片
+         */
+        async function renderRoleList() {
+            const roleListDiv = document.getElementById('role-list');
+            const loadingMessage = document.getElementById('role-loading-message');
+
+            roleListDiv.innerHTML = '';
+            loadingMessage.classList.remove('hidden');
+
+            try {
+                await loadGlobalData(); // 确保权限数据已加载
+                const roles = globalRoles; // 使用全局缓存的 roles
+
+                loadingMessage.classList.add('hidden');
+
+                if (roles.length === 0) {
+                    roleListDiv.innerHTML = `<p class="text-center py-4 text-slate-400 col-span-full">暂无角色模板数据</p>`;
+                    return;
+                }
+
+                roles.forEach(role => {
+                    const rolePermissions = role.permissionIds
+                        .map(id => globalPermissions.find(p => p.id === id)?.permission_name || '未知')
+                        .slice(0, 3);
+                    const permissionText = rolePermissions.join('、') + (rolePermissions.length < role.permissionIds.length ? '...' : '');
+
+                    const card = `
+                    <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 hover:border-indigo-500 transition duration-200">
+                        <div class="flex justify-between items-start mb-3">
+                            <h4 class="text-xl font-bold text-indigo-400">${role.role_name}</h4>
+                            <div class="flex space-x-2">
+                                <button onclick="openRoleModal('edit', ${role.id})" class="text-slate-400 hover:text-indigo-400">
+                                    <i data-lucide="pencil" class="w-4 h-4"></i>
+                                </button>
+                                <button onclick="confirmDeleteRole(${role.id}, '${role.role_name}')" class="text-slate-400 hover:text-red-400">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <p class="text-sm text-slate-400 mb-4">${role.description}</p>
+                        <div class="text-xs text-slate-500">
+                            <p class="font-medium text-slate-300 mb-1 flex items-center"><i data-lucide="shield" class="w-3 h-3 mr-1"></i> 权限示例 (${role.permissionIds.length}项):</p>
+                            <p class="ml-4">${permissionText || '无权限'}</p>
+                        </div>
+                    </div>
+                `;
+                    roleListDiv.insertAdjacentHTML('beforeend', card);
+                });
+                lucide.createIcons();
+            } catch (error) {
+                loadingMessage.textContent = '加载角色数据失败。请检查后端服务是否运行正常。';
+                loadingMessage.classList.remove('hidden');
+            }
+        }
+
+        /**
+         * 渲染权限复选框供角色配置使用
+         */
+        function renderPermissionCheckboxes(selectedPermissionIds = []) {
+            const container = document.getElementById('permission-checkboxes');
+            container.innerHTML = '';
+
+            const permissions = globalPermissions;
+
+            if (permissions.length === 0) {
+                container.innerHTML = `<p class="text-center p-3 text-slate-400">权限数据加载失败或为空。</p>`;
+                return;
+            }
+
+            // 按模块分组权限
+            const groupedPermissions = permissions.reduce((acc, p) => {
+                if (!acc[p.module]) acc[p.module] = [];
+                acc[p.module].push(p);
+                return acc;
+            }, {});
+
+            for (const module in groupedPermissions) {
+                const moduleHtml = `
+                <div class="mb-4 p-3 bg-slate-800 rounded-lg border border-slate-700">
+                    <h5 class="text-md font-semibold mb-2 text-indigo-400">${module}</h5>
+                    ${groupedPermissions[module].map(p => `
+                        <div class="flex items-center mb-1">
+                            <input id="perm-${p.id}" type="checkbox" value="${p.id}" ${selectedPermissionIds.includes(p.id) ? 'checked' : ''}
+                                class="w-4 h-4 text-indigo-600 bg-slate-700 border-slate-600 rounded focus:ring-indigo-500">
+                            <label for="perm-${p.id}" class="ml-2 text-sm font-medium text-slate-300">${p.permission_name} (${p.permission_key})</label>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+                container.insertAdjacentHTML('beforeend', moduleHtml);
+            }
+        }
+
+        // --- 用户管理 (CRUD) ---
+
+        /**
+         * 打开用户添加/编辑弹窗
+         * @param {string} mode - 'add' or 'edit'
+         * @param {number} [userId] - 用户ID
+         */
+        async function openUserModal(mode, userId) {
+            await loadGlobalData(); // 确保角色数据最新
+            const modal = document.getElementById('user-modal');
+            const title = document.getElementById('user-modal-title');
+            const form = document.getElementById('user-form');
+            const roleSelect = document.getElementById('user-role-select');
+
+            // 渲染角色下拉框
+            roleSelect.innerHTML = globalRoles.map(r =>
+                `<option value="${r.id}">${r.role_name} (${r.description})</option>`
+            ).join('');
+
+            form.reset();
+            document.getElementById('user-id').value = '';
+
+            if (mode === 'add') {
+                title.textContent = '新增用户';
+                document.getElementById('password').setAttribute('required', 'required');
+            } else {
+                title.textContent = '编辑用户';
+                document.getElementById('password').removeAttribute('required');
+
+                // 模拟获取单个用户信息，实际应用中应该调用 GET /api/users/{id}
+                const allUsers = await apiFetch('/users');
+                const user = allUsers.find(u => u.id === userId);
+
+                if (user) {
+                    document.getElementById('user-id').value = user.id;
+                    document.getElementById('username').value = user.username;
+                    document.getElementById('real-name').value = user.realName;
+
+                    // 选中已分配的角色
+                    Array.from(roleSelect.options).forEach(option => {
+                        option.selected = user.roleIds.includes(parseInt(option.value));
+                    });
+                } else {
+                    showToast('无法加载用户信息', 'error');
+                    return;
+                }
+            }
+            modal.classList.remove('hidden');
+        }
+
+        /**
+         * 处理用户表单提交 (新增/编辑)
+         */
+        document.getElementById('user-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const userId = document.getElementById('user-id').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const realName = document.getElementById('real-name').value;
+
+            const roleSelect = document.getElementById('user-role-select');
+            const roleIds = Array.from(roleSelect.options)
+                .filter(option => option.selected)
+                .map(option => parseInt(option.value));
+
+            const userData = {
+                username,
+                password,
+                realName,
+                roleIds
+            };
+
+            // 移除空密码字段，避免不必要的更新
+            if (!password) {
+                delete userData.password;
+            }
+
+            try {
+                if (userId) {
+                    // 编辑用户 (PUT /api/users/:id)
+                    await apiFetch(`/users/${userId}`, {
+                        method: 'PUT',
+                        body: JSON.stringify(userData)
+                    });
+                    showToast('用户更新成功', 'success');
+                } else {
+                    // 新增用户 (POST /api/users)
+                    await apiFetch('/users', {
+                        method: 'POST',
+                        body: JSON.stringify(userData)
+                    });
+                    showToast('用户创建成功', 'success');
+                }
+
+                document.getElementById('user-modal').classList.add('hidden');
+                renderUserTable(); // 重新加载数据
+            } catch (error) {
+                // 错误已在 apiFetch 中处理
+            }
+        });
+
+        /**
+         * 确认并切换用户状态 (激活/禁用)
+         */
+        function confirmToggleUserStatus(userId, currentStatus) {
+            const action = currentStatus === 'active' ? '禁用' : '激活';
+            const message = `确定要${action}用户ID ${userId} 吗？`;
+
+            // 实际项目中应使用自定义模态框
+            if (window.confirm(message)) {
+                toggleUserStatus(userId, currentStatus);
+            }
+        }
+
+        async function toggleUserStatus(userId, currentStatus) {
+            const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+            try {
+                await apiFetch(`/users/${userId}/status`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ status: newStatus })
+                });
+                showToast(`用户状态已更新为 ${newStatus === 'active' ? '激活' : '禁用'}`, 'success');
+                renderUserTable();
+            } catch (error) {
+                // 错误已处理
+            }
+        }
+
+        /**
+         * 确认并删除用户
+         */
+        function confirmDeleteUser(userId) {
+            // 实际项目中应使用自定义模态框
+            if (window.confirm(`确定要删除用户ID ${userId} 吗？此操作不可逆！`)) {
+                deleteUser(userId);
+            }
+        }
+
+        async function deleteUser(userId) {
+            try {
+                await apiFetch(`/users/${userId}`, {
+                    method: 'DELETE'
+                });
+                showToast('用户删除成功', 'success');
+                renderUserTable();
+            } catch (error) {
+                // 错误已处理
+            }
+        }
+
+        // --- 角色管理 (CRUD) ---
+
+        /**
+         * 打开角色添加/编辑弹窗
+         */
+        async function openRoleModal(mode, roleId) {
+            await loadGlobalData(); // 确保权限数据最新
+            const modal = document.getElementById('role-modal');
+            const title = document.getElementById('role-modal-title');
+            const form = document.getElementById('role-form');
+
+            form.reset();
+            document.getElementById('role-id').value = '';
+
+            let selectedPermissions = [];
+
+            if (mode === 'add') {
+                title.textContent = '新增角色模板';
+            } else {
+                title.textContent = '编辑角色模板';
+                const role = globalRoles.find(r => r.id === roleId);
+                if (role) {
+                    document.getElementById('role-id').value = role.id;
+                    document.getElementById('role-name').value = role.role_name;
+                    document.getElementById('role-desc').value = role.description;
+                    selectedPermissions = role.permissionIds;
+                }
+            }
+
+            renderPermissionCheckboxes(selectedPermissions);
+            modal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        /**
+         * 处理角色表单提交 (新增/编辑)
+         */
+        document.getElementById('role-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const roleId = document.getElementById('role-id').value;
+            const role_name = document.getElementById('role-name').value;
+            const description = document.getElementById('role-desc').value;
+
+            const permissionIds = Array.from(document.querySelectorAll('#permission-checkboxes input[type="checkbox"]:checked'))
+                .map(checkbox => parseInt(checkbox.value));
+
+            const roleData = { role_name, description, permissionIds };
+
+            try {
+                if (roleId) {
+                    // 编辑角色 (PUT /api/roles/:id)
+                    await apiFetch(`/roles/${roleId}`, {
+                        method: 'PUT',
+                        body: JSON.stringify(roleData)
+                    });
+                    showToast('角色更新成功', 'success');
+                } else {
+                    // 新增角色 (POST /api/roles)
+                    await apiFetch('/roles', {
+                        method: 'POST',
+                        body: JSON.stringify(roleData)
+                    });
+                    showToast('角色创建成功', 'success');
+                }
+
+                document.getElementById('role-modal').classList.add('hidden');
+                renderRoleList(); // 重新加载数据
+            } catch (error) {
+                // 错误已在 apiFetch 中处理
+            }
+        });
+
+        /**
+         * 确认并删除角色
+         */
+        function confirmDeleteRole(roleId, roleName) {
+            // 实际项目中应使用自定义模态框
+            if (window.confirm(`确定要删除角色 [${roleName}] 吗？删除后，分配给该角色的用户将失去相应权限！`)) {
+                deleteRole(roleId);
+            }
+        }
+
+        async function deleteRole(roleId) {
+            try {
+                await apiFetch(`/roles/${roleId}`, {
+                    method: 'DELETE'
+                });
+                showToast('角色删除成功', 'success');
+                renderRoleList();
+                renderUserTable(); // 重新加载用户列表以更新角色显示
+            } catch (error) {
+                // 错误已处理
+            }
+        }
+
+
+        /**
+         * 通用关闭弹窗函数，避免点击内部元素关闭
+         */
+        function closeModal(event, modalId) {
+            if (event.target.id === modalId) {
+                document.getElementById(modalId).classList.add('hidden');
+            }
+        }
+
+        // --- 初始化 ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 绑定标签页切换事件
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => switchTab(btn.getAttribute('data-tab')));
+            });
+
+            // 预先加载一次全局数据
+            await loadGlobalData();
+
+            // 默认显示用户列表
+            switchTab('users');
+        });
+
+    </script>
+
+</body>
+
+</html>

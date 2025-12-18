@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统主页 | 广域立体风险感知平台</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root { --color-background: #0f172a; }
+        body { background-color: var(--color-background); font-family: 'Inter', sans-serif; }
+        .card-hover:hover { transform: translateY(-4px); border-color: #6366f1; }
+    </style>
+    
+    <!-- ... 其他 head 内容 ... -->
+    <script>
+        // --- 路由守卫 (Security Guard) ---
+        // 页面加载瞬间立即执行
+        (function() {
+            const token = localStorage.getItem('token');
+            // 如果没有 Token，说明没登录
+            if (!token) {
+                // 记录当前想去的页面，登录后可以跳回来 (可选功能)
+                // sessionStorage.setItem('redirect', window.location.href);
+                
+                // 强制跳转回登录页
+                alert('您尚未登录，请先登录！');
+                window.location.href = 'login.html';
+            }
+        })();
+    </script>
+</head>
+
+<body class="min-h-screen text-slate-100">
+
+    <!-- 顶部导航 -->
+    <nav class="bg-slate-800 border-b border-slate-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center">
+                    <i data-lucide="shield" class="h-8 w-8 text-indigo-500"></i>
+                    <span class="ml-3 text-xl font-bold">广域立体风险感知平台</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center text-slate-300">
+                        <i data-lucide="user-circle" class="h-5 w-5 mr-2"></i>
+                        <span id="currentUser">Admin</span>
+                    </div>
+                    <button onclick="logout()" class="text-sm text-slate-400 hover:text-white flex items-center">
+                        <i data-lucide="log-out" class="h-4 w-4 mr-1"></i> 退出
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <main class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <div class="mb-10">
+            <h1 class="text-3xl font-bold text-white">工作台概览</h1>
+            <p class="mt-2 text-slate-400">选择您要进入的业务模块</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            
+            <!-- 模块 1: 用户权限管理 (链接到您提供的文件) -->
+            <!-- 假设您之前的 HTML 文件名为 user-admin.html -->
+            <a href="用户管理控制台.html" class="card-hover block p-6 bg-slate-800 rounded-xl border border-slate-700 transition duration-200 group">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="p-3 bg-indigo-900/30 rounded-lg group-hover:bg-indigo-900/50 transition">
+                        <i data-lucide="users-round" class="h-8 w-8 text-indigo-400"></i>
+                    </div>
+                    <i data-lucide="arrow-right" class="h-5 w-5 text-slate-500 group-hover:text-indigo-400"></i>
+                </div>
+                <h3 class="text-xl font-bold text-slate-100">用户权限管理</h3>
+                <p class="mt-2 text-sm text-slate-400">管理系统用户、角色分配及API访问权限配置。</p>
+            </a>
+
+            <!-- 模块 2: 风险监控看板 (示例) -->
+            <div class="card-hover block p-6 bg-slate-800 rounded-xl border border-slate-700 transition duration-200 group cursor-pointer">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="p-3 bg-emerald-900/30 rounded-lg">
+                        <i data-lucide="activity" class="h-8 w-8 text-emerald-400"></i>
+                    </div>
+                    <i data-lucide="lock" class="h-5 w-5 text-slate-500"></i>
+                </div>
+                <h3 class="text-xl font-bold text-slate-100">风险实时监控</h3>
+                <p class="mt-2 text-sm text-slate-400">查看实时风险告警数据流和态势感知地图。(建设中)</p>
+            </div>
+
+            <!-- 模块 3: 系统设置 (示例) -->
+            <div class="card-hover block p-6 bg-slate-800 rounded-xl border border-slate-700 transition duration-200 group cursor-pointer">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="p-3 bg-slate-700/50 rounded-lg">
+                        <i data-lucide="settings" class="h-8 w-8 text-slate-400"></i>
+                    </div>
+                    <i data-lucide="lock" class="h-5 w-5 text-slate-500"></i>
+                </div>
+                <h3 class="text-xl font-bold text-slate-100">系统全局配置</h3>
+                <p class="mt-2 text-sm text-slate-400">平台基础参数设置与日志审计。(建设中)</p>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        lucide.createIcons();
+        
+        function logout() {
+            if(confirm('确定要退出登录吗？')) {
+                localStorage.removeItem('token');
+                window.location.href = 'login.html';
+            }
+        }
+
+        // 简单的鉴权检查
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                // 如果没有token，重定向回登录页
+                // window.location.href = 'login.html'; // 注释掉以便您直接预览
+                console.log('未检测到Token，生产环境应跳转至 login.html');
+            }
+        });
+    </script>
+</body>
+</html>

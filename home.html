@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>城市级燃气管道安全运行智能服务平台</title>
+    <!-- 保留 home.html 的 favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        /* --- home00.html 的原有样式 --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0a1e3d, #07162e);
+            color: #e0f0ff;
+            min-height: 100vh;
+        }
+        
+        /* 顶部导航 */
+        .header {
+            background: rgba(3, 8, 41, 0.9);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+            height: 80px;
+            align-items: center;
+        }
+        
+        .header-center {
+            text-align: center;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .header-center h2 {
+            color: #4cc9f0;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .nav ul {
+            list-style: none;
+            display: flex;
+        }
+        
+        .nav ul li {
+            transition: all 0.3s ease;
+            border-radius: 5px;
+            margin: 0 10px;
+            padding: 8px 15px;
+        }
+        
+        .nav ul li:hover {
+            background: rgba(67, 97, 238, 0.2);
+        }
+        
+        .nav ul li a {
+            color: #e0f0ff;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+        
+        .nav ul li a i {
+            margin-right: 8px;
+        }
+        
+        .nav-active {
+            background: rgba(67, 97, 238, 0.3);
+        }
+        
+        /* 主内容区 */
+        .container {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 3fr;
+            gap: 20px;
+        }
+        
+        .sidebar {
+            background: rgba(8, 24, 50, 0.7);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 8px 20px rgba(0, 15, 60, 0.4);
+            border: 1px solid #1e3a8a;
+        }
+        
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .panel {
+            background: rgba(8, 24, 50, 0.7);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 8px 20px rgba(0, 15, 60, 0.4);
+            border: 1px solid #1e3a8a;
+        }
+        
+        .panel-header {
+            font-size: 18px;
+            color: #4cc9f0;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #2d5aa5;
+            display: flex;
+            align-items: center;
+        }
+        
+        .panel-header i {
+            margin-right: 10px;
+        }
+        
+        /* 地图区域 */
+        .map-container {
+            height: 400px;
+            background: #0a1e3d;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* 数据卡片 */
+        .data-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .data-card {
+            background: rgba(30, 58, 138, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid #2d5aa5;
+        }
+        
+        .data-card h3 {
+            font-size: 14px;
+            color: #89b4fa;
+            margin-bottom: 10px;
+        }
+        
+        .data-card .value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4cc9f0;
+        }
+        
+        .data-card .unit {
+            font-size: 14px;
+            color: #89b4fa;
+        }
+        
+        /* 图表容器 */
+        .charts-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .chart-panel {
+            height: 300px;
+            background: rgba(8, 24, 50, 0.7);
+            border-radius: 8px;
+            padding: 15px;
+        }
+        
+        .chart-header {
+            font-size: 16px;
+            color: #4cc9f0;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .chart {
+            width: 100%;
+            height: calc(100% - 30px);
+        }
+        
+        /* 预警指示器 */
+        .alert-indicator {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            background: rgba(255, 0, 0, 0.2);
+            border-left: 4px solid #ff3d00;
+        }
+        
+        .alert-icon {
+            font-size: 24px;
+            margin-right: 10px;
+            color: #ff3d00;
+        }
+        
+        .alert-info {
+            flex: 1;
+        }
+        
+        .alert-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .alert-desc {
+            font-size: 14px;
+            color: #c8e6ff;
+        }
+        
+        /* 菜单样式 */
+        .menu-item {
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+        }
+        
+        .menu-item:hover {
+            background: rgba(67, 97, 238, 0.2);
+        }
+        
+        .menu-item i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .menu-item.active {
+            background: rgba(67, 97, 238, 0.3);
+        }
+        
+        /* 状态标签 */
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .status-normal {
+            background: rgba(0, 200, 83, 0.2);
+            color: #00c853;
+        }
+        
+        .status-warning {
+            background: rgba(255, 145, 0, 0.2);
+            color: #ff9100;
+        }
+        
+        .status-danger {
+            background: rgba(255, 61, 0, 0.2);
+            color: #ff3d00;
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 1200px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                height: auto;
+                padding: 10px;
+            }
+            
+            .nav ul {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            
+            .data-cards {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* 动画效果 */
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        /* 选项卡样式 */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #2d5aa5;
+            margin-bottom: 15px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab.active {
+            border-bottom: 3px solid #4361ee;
+            color: #4cc9f0;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* 更新指示器 */
+        .updating {
+            position: relative;
+        }
+        
+        .updating::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 10px;
+            height: 10px;
+            background-color: #4cc9f0;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        /* --- 新增：home.html 的退出按钮样式 --- */
+        .logout-btn {
+            background: rgba(255, 77, 79, 0.1);
+            color: #ff4d4f;
+            border: 1px solid #ff4d4f;
+            padding: 5px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .logout-btn:hover {
+            background: rgba(255, 77, 79, 0.2);
+            box-shadow: 0 0 8px rgba(255, 77, 79, 0.4);
+        }
+    </style>
+</head>
+
+<body>
+    <!--顶部导航-->
+    <header class="header">
+        <div class="nav">
+            <ul>
+                <li class="nav-active"><a href="home.html"><i class="fas fa-home"></i>主页</a></li>
+            </ul>
+        </div>
+        <div class="header-center">
+            <h2>广域立体风险“感知-通信-评估-预警”智能服务平台</h2>
+            <p><small>Wide-area three-dimensional risk "perception-communication-assessment-warning" intelligent service platform</small></p>
+        </div>
+        
+        <!-- 右侧：整合 home.html 的用户状态和 home00.html 的布局 -->
+        <div class="nav" style="display: flex; align-items: center;">
+            <!-- 管理员入口 (默认隐藏) -->
+            <ul id="nav-admin-link" style="display: none; margin-right: 15px;">
+                <li><a href="用户管理控制台.html"><i class="fas fa-users-cog"></i>用户管理</a></li>
+            </ul>
+            
+            <!-- 用户信息 -->
+            <div class="user-info" style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 14px;"><i class="fas fa-user-circle"></i> <span id="display-user-name">加载中...</span></span>
+                <span id="display-user-role" style="font-size: 12px; color: #8ba4c9;"></span>
+                <button class="logout-btn" onclick="handleLogout()">退出系统</button>
+            </div>
+        </div>
+    </header>
+
+    <!--主内容区 (home00.html 的内容)-->
+    <div class="container">
+        <!-- 左侧菜单 -->
+        <div class="sidebar">
+            <div class="panel-header"><i class="fas fa-th-list"></i>功能菜单</div>
+            
+            <div class="menu-item active">
+                <i class="fas fa-globe"></i>全景监控
+            </div>
+            <div class="menu-item">
+                <i class="fas fa-database"></i>历史数据回溯
+            </div>
+            
+            <div class="panel-header" style="margin-top: 20px;"><i class="fas fa-info-circle"></i>系统状态</div>
+            
+            <div class="data-card" id="online-users-card">
+                <h3>在线用户数</h3>
+                <div class="value">1,247</div>
+                <div class="unit">/ 2,000 最大容量</div>
+            </div>
+            
+            <div class="data-card" style="margin-top: 10px;" id="response-time-card">
+                <h3>数据处理速度</h3>
+                <div class="value">3.2</div>
+                <div class="unit">平均响应时间(ms)</div>
+            </div>
+        </div>
+
+        <!-- 右侧主内容 -->
+        <div class="main-content">
+            <!-- 预警信息 -->
+            <div class="panel">
+                <div class="panel-header"><i class="fas fa-bell"></i>风险综合评估与精准预警</div>
+                
+                <div class="alert-indicator">
+                    <div class="alert-icon"><i class="fas fa-exclamation-circle"></i></div>
+                    <div class="alert-info">
+                        <div class="alert-title">甲烷浓度异常 - 海淀区中关村大街</div>
+                        <div class="alert-desc">检测到甲烷浓度超过安全阈值(1.0%)，当前值: 1.25%</div>
+                    </div>
+                    <div class="status-badge status-danger">高风险</div>
+                </div>
+                
+                <div class="alert-indicator">
+                    <div class="alert-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                    <div class="alert-info">
+                        <div class="alert-title">管道位移异常 - 朝阳区望京段</div>
+                        <div class="alert-desc">检测到3.2mm位移，超过阈值(2.5mm)</div>
+                    </div>
+                    <div class="status-badge status-warning">中风险</div>
+                </div>
+            </div>
+
+            <!-- 地图区域 -->
+            <div class="panel">
+                <div class="panel-header"><i class="fas fa-map-marked-alt"></i>管道网络监控图</div>
+                <div class="map-container" id="map"></div>
+            </div>
+
+            <!-- 数据图表区域 -->
+            <div class="panel">
+                <div class="tabs">
+                    <div class="tab active" data-tab="env">多维度数据可视化</div>
+                </div>
+                
+                <div class="tab-content active" id="env-tab">
+                    <div class="charts-container">
+                        <div class="chart-panel">
+                            <div class="chart-header"><i class="fas fa-temperature-high"></i>温度监测</div>
+                            <div class="chart" id="temp-chart"></div>
+                        </div>
+                        <div class="chart-panel">
+                            <div class="chart-header"><i class="fas fa-tint"></i>湿度监测</div>
+                            <div class="chart" id="humidity-chart"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="pipeline-tab">
+                    <div class="charts-container">
+                        <div class="chart-panel">
+                            <div class="chart-header"><i class="fas fa-compress-alt"></i>压力变化</div>
+                            <div class="chart" id="pressure-chart"></div>
+                        </div>
+                        <div class="chart-panel">
+                            <div class="chart-header"><i class="fas fa-ruler-combined"></i>位移监测</div>
+                            <div class="chart" id="displacement-chart"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="forecast-tab">
+                    <div class="charts-container">
+                        <div class="chart-panel">
+                            <div class="chart-header"><i class="fas fa-wind"></i>风速预测</div>
+                            <div class="chart" id="wind-chart"></div>
+                        </div>
+                        <div class="chart-panel">
+                            <div class="chart-header"><i class="fas fa-cloud-rain"></i>降水预测</div>
+                            <div class="chart" id="rain-chart"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 数据卡片 -->
+            <div class="panel">
+                <div class="panel-header"><i class="fas fa-chart-pie"></i>风险感知与研判</div>
+                <div class="data-cards">
+                    <div class="data-card" id="methane-card">
+                        <h3>甲烷浓度</h3>
+                        <div class="value">0.75<span class="unit">%</span></div>
+                        <div class="status-badge status-normal">正常</div>
+                    </div>
+                    <div class="data-card" id="pressure-card">
+                        <h3>管道压力</h3>
+                        <div class="value">3.6<span class="unit">MPa</span></div>
+                        <div class="status-badge status-normal">正常</div>
+                    </div>
+                    <div class="data-card" id="displacement-card">
+                        <h3>地表位移</h3>
+                        <div class="value">1.8<span class="unit">mm</span></div>
+                        <div class="status-badge status-normal">正常</div>
+                    </div>
+                    <div class="data-card" id="stress-card">
+                        <h3>应力指数</h3>
+                        <div class="value">42.5<span class="unit">kN</span></div>
+                        <div class="status-badge status-warning">注意</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- home.html 的核心逻辑: 权限与用户管理 ---
+        function checkAuth() {
+            const token = localStorage.getItem('auth_token');
+            const userStr = localStorage.getItem('current_user');
+
+            if (!token || !userStr) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const user = JSON.parse(userStr);
+            const nameElem = document.getElementById('display-user-name');
+            if(nameElem) nameElem.textContent = user.realName || user.username;
+            
+            // 权限控制逻辑
+            // 如果用户名为 admin 或者 角色列表中包含 'Administrator'
+            const isAdmin = user.username === 'admin' || (user.roleNames && user.roleNames.includes('Administrator'));
+            
+            if (isAdmin) {
+                const adminLink = document.getElementById('nav-admin-link');
+                if(adminLink) adminLink.style.display = 'block';
+                
+                const roleElem = document.getElementById('display-user-role');
+                if(roleElem) roleElem.textContent = '(管理员)';
+            } else {
+                const roleElem = document.getElementById('display-user-role');
+                if(roleElem) roleElem.textContent = '(普通用户)';
+            }
+        }
+
+        function handleLogout() {
+            if(confirm('确定要退出系统吗？')) {
+                localStorage.removeItem('auth_token');
+                localStorage.removeItem('current_user');
+                window.location.href = 'login.html';
+            }
+        }
+
+        // --- home00.html 的图表与交互逻辑 ---
+        
+        // 初始化图表
+        function initCharts() {
+            // 温度图表
+            window.tempChart = echarts.init(document.getElementById('temp-chart'));
+            window.tempChart.setOption({
+                tooltip: { trigger: 'axis' },
+                grid: { top: 20, right: 20, bottom: 30, left: 50 },
+                xAxis: { type: 'category', data: ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00'], axisLine: { lineStyle: { color: '#2d5aa5' } } },
+                yAxis: { type: 'value', name: '温度(°C)', nameTextStyle: { color: '#89b4fa' }, axisLine: { lineStyle: { color: '#2d5aa5' } }, splitLine: { lineStyle: { color: 'rgba(45, 90, 165, 0.3)' } } },
+                series: [{
+                    name: '温度', type: 'line', smooth: true, data: [18, 16, 19, 24, 27, 25, 22, 20],
+                    lineStyle: { color: '#4361ee', width: 3 }, itemStyle: { color: '#4cc9f0' },
+                    areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(67, 97, 238, 0.5)' }, { offset: 1, color: 'rgba(67, 97, 238, 0.1)' }]) }
+                }]
+            });
+
+            // 湿度图表
+            window.humidityChart = echarts.init(document.getElementById('humidity-chart'));
+            window.humidityChart.setOption({
+                tooltip: { trigger: 'axis' },
+                grid: { top: 20, right: 20, bottom: 30, left: 50 },
+                xAxis: { type: 'category', data: ['00:00', '03:00', '06:00', '09:00', '12:00', '15:00', '18:00', '21:00'], axisLine: { lineStyle: { color: '#2d5aa5' } } },
+                yAxis: { type: 'value', name: '湿度(%)', nameTextStyle: { color: '#89b4fa' }, axisLine: { lineStyle: { color: '#2d5aa5' } }, splitLine: { lineStyle: { color: 'rgba(45, 90, 165, 0.3)' } } },
+                series: [{
+                    name: '湿度', type: 'line', smooth: true, data: [65, 70, 75, 60, 45, 50, 65, 75],
+                    lineStyle: { color: '#4361ee', width: 3 }, itemStyle: { color: '#4cc9f0' },
+                    areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(67, 97, 238, 0.5)' }, { offset: 1, color: 'rgba(67, 97, 238, 0.1)' }]) }
+                }]
+            });
+
+            // 压力图表
+            window.pressureChart = echarts.init(document.getElementById('pressure-chart'));
+            window.pressureChart.setOption({
+                tooltip: { trigger: 'axis' },
+                grid: { top: 20, right: 20, bottom: 30, left: 50 },
+                xAxis: { type: 'category', data: ['海淀', '朝阳', '西城', '东城', '丰台', '石景山', '昌平', '通州', '大兴', '房山', '顺义'], axisLine: { lineStyle: { color: '#2d5aa5' } } },
+                yAxis: { type: 'value', name: '压力(MPa)', nameTextStyle: { color: '#89b4fa' }, axisLine: { lineStyle: { color: '#2d5aa5' } }, splitLine: { lineStyle: { color: 'rgba(45, 90, 165, 0.3)' } } },
+                series: [{
+                    name: '压力', type: 'bar', data: [3.6, 3.8, 3.5, 3.7, 3.4, 3.9, 3.3, 3.6, 3.5, 3.7, 3.8],
+                    itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: '#4361ee' }, { offset: 1, color: '#3a0ca3' }]) }
+                }]
+            });
+
+            // 位移图表
+            window.displacementChart = echarts.init(document.getElementById('displacement-chart'));
+            window.displacementChart.setOption({
+                tooltip: { trigger: 'axis' },
+                grid: { top: 20, right: 20, bottom: 30, left: 50 },
+                xAxis: { type: 'category', data: ['海淀', '朝阳', '西城', '东城', '丰台', '石景山', '昌平', '通州', '大兴', '房山', '顺义'], axisLine: { lineStyle: { color: '#2d5aa5' } } },
+                yAxis: { type: 'value', name: '位移(mm)', nameTextStyle: { color: '#89b4fa' }, axisLine: { lineStyle: { color: '#2d5aa5' } }, splitLine: { lineStyle: { color: 'rgba(45, 90, 165, 0.3)' } } },
+                series: [{
+                    name: '位移', type: 'bar', data: [1.8, 2.1, 1.5, 1.9, 2.5, 1.6, 2.2, 1.7, 2.0, 1.8, 1.9],
+                    itemStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: '#4cc9f0' }, { offset: 1, color: '#4361ee' }]) }
+                }]
+            });
+
+            // 风速预测图表
+            window.windChart = echarts.init(document.getElementById('wind-chart'));
+            window.windChart.setOption({
+                tooltip: { trigger: 'axis' },
+                grid: { top: 20, right: 20, bottom: 30, left: 50 },
+                xAxis: { type: 'category', data: ['现在', '+1h', '+2h', '+3h', '+4h', '+5h'], axisLine: { lineStyle: { color: '#2d5aa5' } } },
+                yAxis: { type: 'value', name: '风速(m/s)', nameTextStyle: { color: '#89b4fa' }, axisLine: { lineStyle: { color: '#2d5aa5' } }, splitLine: { lineStyle: { color: 'rgba(45, 90, 165, 0.3)' } } },
+                series: [{
+                    name: '风速', type: 'line', data: [3.2, 3.5, 4.1, 5.2, 5.8, 6.3],
+                    lineStyle: { color: '#4361ee', width: 3 }, itemStyle: { color: '#4cc9f0' },
+                    areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(67, 97, 238, 0.5)' }, { offset: 1, color: 'rgba(67, 97, 238, 0.1)' }]) }
+                }]
+            });
+
+            // 降水预测图表
+            window.rainChart = echarts.init(document.getElementById('rain-chart'));
+            window.rainChart.setOption({
+                tooltip: { trigger: 'axis' },
+                grid: { top: 20, right: 20, bottom: 30, left: 50 },
+                xAxis: { type: 'category', data: ['现在', '+1h', '+2h', '+3h', '+4h', '+5h'], axisLine: { lineStyle: { color: '#2d5aa5' } } },
+                yAxis: { type: 'value', name: '降水概率(%)', nameTextStyle: { color: '#89b4fa' }, axisLine: { lineStyle: { color: '#2d5aa5' } }, splitLine: { lineStyle: { color: 'rgba(45, 90, 165, 0.3)' } } },
+                series: [{
+                    name: '降水概率', type: 'line', data: [10, 15, 30, 65, 80, 75],
+                    lineStyle: { color: '#4361ee', width: 3 }, itemStyle: { color: '#4cc9f0' },
+                    areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(67, 97, 238, 0.5)' }, { offset: 1, color: 'rgba(67, 97, 238, 0.1)' }]) }
+                }]
+            });
+
+            // 窗口调整时重置图表大小
+            window.addEventListener('resize', function() {
+                window.tempChart && window.tempChart.resize();
+                window.humidityChart && window.humidityChart.resize();
+                window.pressureChart && window.pressureChart.resize();
+                window.displacementChart && window.displacementChart.resize();
+                window.windChart && window.windChart.resize();
+                window.rainChart && window.rainChart.resize();
+                window.mapChart && window.mapChart.resize();
+            });
+        }
+
+        // 初始化地图
+        function initMap() {
+            const mapContainer = document.getElementById('map');
+            window.mapChart = echarts.init(mapContainer);
+            
+            const option = {
+                backgroundColor: '#0a1e3d',
+                tooltip: { trigger: 'item', formatter: '{b}: {c}' },
+                series: [{
+                    name: '管道网络', type: 'graph', layout: 'none', symbolSize: 50, roam: true,
+                    label: { show: true, position: 'bottom', color: '#e0f0ff', fontSize: 12 },
+                    edgeSymbol: ['circle', 'arrow'], edgeSymbolSize: [4, 10], edgeLabel: { fontSize: 12, color: '#e0f0ff' },
+                    data: [
+                        {name: '海淀区', x: 300, y: 200, value: 95, itemStyle: {color: '#4361ee'}},
+                        {name: '朝阳区', x: 500, y: 250, value: 90, itemStyle: {color: '#4cc9f0'}},
+                        {name: '西城区', x: 250, y: 300, value: 85, itemStyle: {color: '#4361ee'}},
+                        {name: '东城区', x: 450, y: 300, value: 88, itemStyle: {color: '#4cc9f0'}},
+                        {name: '丰台区', x: 350, y: 400, value: 82, itemStyle: {color: '#4361ee'}},
+                        {name: '石景山区', x: 200, y: 250, value: 87, itemStyle: {color: '#4cc9f0'}},
+                        {name: '昌平区', x: 250, y: 100, value: 80, itemStyle: {color: '#4361ee'}},
+                        {name: '通州区', x: 600, y: 300, value: 92, itemStyle: {color: '#4cc9f0'}},
+                        {name: '大兴区', x: 400, y: 500, value: 78, itemStyle: {color: '#4361ee'}},
+                        {name: '房山区', x: 200, y: 400, value: 84, itemStyle: {color: '#4cc9f0'}},
+                        {name: '顺义区', x: 550, y: 200, value: 89, itemStyle: {color: '#4361ee'}}
+                    ],
+                    links: [
+                        {source: '海淀区', target: '朝阳区', value: '主干线'}, {source: '海淀区', target: '西城区', value: '支线'},
+                        {source: '海淀区', target: '昌平区', value: '支线'}, {source: '朝阳区', target: '东城区', value: '主干线'},
+                        {source: '朝阳区', target: '通州区', value: '主干线'}, {source: '朝阳区', target: '顺义区', value: '支线'},
+                        {source: '西城区', target: '丰台区', value: '支线'}, {source: '西城区', target: '石景山区', value: '支线'},
+                        {source: '东城区', target: '丰台区', value: '主干线'}, {source: '丰台区', target: '大兴区', value: '支线'},
+                        {source: '石景山区', target: '房山区', value: '支线'}, {source: '昌平区', target: '海淀区', value: '支线'},
+                        {source: '通州区', target: '朝阳区', value: '主干线'}, {source: '大兴区', target: '丰台区', value: '支线'},
+                        {source: '房山区', target: '丰台区', value: '支线'}, {source: '顺义区', target: '朝阳区', value: '支线'}
+                    ],
+                    lineStyle: { opacity: 0.9, width: 2, curveness: 0.1, color: '#4cc9f0' }
+                }]
+            };
+            window.mapChart.setOption(option);
+        }
+
+        // 选项卡切换功能
+        function initTabs() {
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabName = this.getAttribute('data-tab');
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    this.classList.add('active');
+                    document.getElementById(`${tabName}-tab`).classList.add('active');
+                });
+            });
+        }
+
+        // 模拟实时数据更新
+        function updateData() {
+            const onlineUsersElement = document.querySelector('#online-users-card .value');
+            if(onlineUsersElement) {
+                const currentUsers = parseInt(onlineUsersElement.textContent.replace(',', ''));
+                const newUsers = Math.max(1200, Math.min(2000, currentUsers + Math.floor(Math.random() * 20 - 10)));
+                onlineUsersElement.textContent = newUsers.toLocaleString();
+            }
+            
+            const responseTimeElement = document.querySelector('#response-time-card .value');
+            if(responseTimeElement) {
+                const currentTime = parseFloat(responseTimeElement.textContent);
+                const newTime = Math.max(1.5, Math.min(5.0, currentTime + (Math.random() - 0.5) * 0.5));
+                responseTimeElement.textContent = newTime.toFixed(1);
+            }
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth(); // 先执行权限检查
+            
+            initCharts();
+            initMap();
+            initTabs();
+            
+            setInterval(updateData, 5000);
+        });
+    </script>
+</body>
+</html>
