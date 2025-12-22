@@ -332,30 +332,53 @@
          * 自定义 Toast 通知（替代 alert/confirm）
          */
         function showToast(message, type = 'info') {
-            // 实际项目中应实现一个漂亮的Toast组件
-            console.log(`[${type.toUpperCase()}] ${message}`);
-            // 简单实现：使用一个临时的div显示消息
             let toast = document.getElementById('api-toast');
             if (!toast) {
                 toast = document.createElement('div');
                 toast.id = 'api-toast';
-                toast.style.cssText = 'position:fixed; top:20px; right:20px; padding:15px; border-radius:8px; color:white; font-weight:bold; z-index:1000; transition:opacity 0.5s; opacity:0;';
+                toast.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    padding: 15px;
+                    border-radius: 8px;
+                    color: white;
+                    font-weight: bold;
+                    z-index: 1000;
+                    transition: opacity 0.5s ease;
+                    opacity: 0;
+                    pointer-events: none; /* 防止遮挡点击 */
+                `;
                 document.body.appendChild(toast);
             }
 
             const colors = {
-                info: 'bg-indigo-600',
-                success: 'bg-green-600',
-                error: 'bg-red-600'
+                info: '#4f46e5',   // indigo-600
+                success: '#059669', // green-600
+                error: '#dc2626'    // red-600
             };
 
-            toast.className = colors[type] || colors.info;
+            // 使用背景色（避免依赖 Tailwind class）
+            toast.style.backgroundColor = colors[type] || colors.info;
             toast.textContent = message;
-            toast.style.opacity = 1;
 
+            // 强制重排，确保 transition 生效
+            void toast.offsetWidth;
+
+            // 显示（触发动画）
+            toast.style.opacity = '1';
+
+            // 3秒后开始淡出，并在动画结束后移除
             setTimeout(() => {
-                toast.style.opacity = 0;
-            }, 3000);
+                toast.style.opacity = '0';
+                // 等待淡出动画完成（0.5s）后再移除
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                        // 或者用：toast.remove(); （现代浏览器支持）
+                    }
+                }, 500); // 与 CSS transition 时间一致
+            }, 2000
         }
 
         /**
@@ -669,27 +692,32 @@
             }
 
             try {
-                if (userId) {
-                    // 编辑用户 (PUT /api/users/:id)
-                    await apiFetch(`/users/${userId}`, {
-                        method: 'PUT',
-                        body: JSON.stringify(userData)
-                    });
-                    showToast('用户更新成功', 'success');
-                } else {
-                    // 新增用户 (POST /api/users)
-                    await apiFetch('/users', {
-                        method: 'POST',
-                        body: JSON.stringify(userData)
-                    });
-                    showToast('用户创建成功', 'success');
+                    if (userId) {
+                        await apiFetch(`/users/${userId}`, {
+                            method: 'PUT',
+                            body: JSON.stringify(userData)
+                        });
+                        showToast('用户更新成功', 'success');
+                    } else {
+                        await apiFetch('/users', {
+                            method: 'POST',
+                            body: JSON.stringify(userData)
+                        });
+                        showToast('用户创建成功', 'success');
+                    }
+                } catch (error) {
+                    // 这里的错误会被 apiFetch 捕获并提示
+                    console.error("提交失败:", error);
+                } finally {
+                    // 【关键修改】无论成功还是报错，都必须执行以下代码
+                    const userModal = document.getElementById('user-modal');
+                    if (userModal) {
+                        userModal.classList.add('hidden'); // 彻底隐藏弹窗和遮罩
+                    }
+                    renderUserTable(); // 刷新表格
+                    // 恢复身体滚动（防止弹窗锁定页面）
+                    document.body.style.overflow = 'auto';
                 }
-
-                document.getElementById('user-modal').classList.add('hidden');
-                renderUserTable(); // 重新加载数据
-            } catch (error) {
-                // 错误已在 apiFetch 中处理
-            }
         });
 
         /**
@@ -713,10 +741,19 @@
                     body: JSON.stringify({ status: newStatus })
                 });
                 showToast(`用户状态已更新为 ${newStatus === 'active' ? '激活' : '禁用'}`, 'success');
-                renderUserTable();
             } catch (error) {
-                // 错误已处理
-            }
+                console.error("状态切换失败:", error);
+                // 这里不需要额外处理，apiFetch 内部通常已有提示
+            } finally {
+                    // 【关键修改】无论成功还是报错，都必须执行以下代码
+                    const userModal = document.getElementById('user-modal');
+                    if (userModal) {
+                        userModal.classList.add('hidden'); // 彻底隐藏弹窗和遮罩
+                    }
+                    renderUserTable(); // 刷新表格
+                    // 恢复身体滚动（防止弹窗锁定页面）
+                    document.body.style.overflow = 'auto';
+                }
         }
 
         /**
